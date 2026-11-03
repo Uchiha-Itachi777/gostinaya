@@ -1,0 +1,112 @@
+// Схема БД «Гостиной идей». Для ER-диаграммы в пояснительной записке
+// можно вставить этот файл в dbdiagram.io или открыть: npm run db:studio
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Пользователь сообщества
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("Придумываю свой проект") // чем занимается
+  cityId       Int?
+  city         City?    @relation(fields: [cityId], references: [id])
+  createdAt    DateTime @default(now())
+
+  ideas         Idea[]
+  comments      Comment[]
+  reactions     Reaction[]
+  registrations EventRegistration[]
+  quizResults   QuizResult[]
+}
+
+// Город (для блока «География»)
+model City {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  users  User[]
+  events Event[]
+}
+
+// Идея участника
+model Idea {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  category    String // AI и технологии, Образование, ...
+  need        String // Честный отзыв, Ищу команду, ...
+  authorId    Int
+  author      User     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+
+  comments  Comment[]
+  reactions Reaction[]
+}
+
+// Комментарий; если isAi = true, это ответ ИИ-напарника Луми (автора нет)
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String
+  ideaId    Int
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id])
+  isAi      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// Реакция: type = "like" (Нравится) или "help" (Хочу помочь)
+model Reaction {
+  id     Int    @id @default(autoincrement())
+  type   String
+  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+  ideaId Int
+  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ideaId, type]) // один пользователь — одна реакция каждого типа
+}
+
+// Мероприятие
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  shortText   String // текст на карточке
+  description String // текст в окне «Подробнее»
+  format      String // «Онлайн · открытая встреча»
+  place       String // «ZOOM / ONLINE», «БИШКЕК / CITY»
+  startsAt    DateTime
+  cityId      Int?
+  city        City?    @relation(fields: [cityId], references: [id])
+
+  registrations EventRegistration[]
+}
+
+// Запись пользователя на мероприятие
+model EventRegistration {
+  id      Int   @id @default(autoincrement())
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id])
+  eventId Int
+  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+}
+
+// Результат квиза «Найти своих»
+model QuizResult {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  answers   Json
+  createdAt DateTime @default(now())
+}
