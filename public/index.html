@@ -108,30 +108,97 @@
 <div class="modal ai-modal" id="lumiModal" role="dialog" aria-modal="true" aria-labelledby="lumiTitle"><div class="modal-box"><div class="ai-head"><div><h3 id="lumiTitle">✨ Луми — ИИ-напарник</h3><p>Помогает развивать идеи и находить следующий шаг</p></div><button class="iconbtn" onclick="closeModal('lumiModal')" aria-label="Закрыть чат">×</button></div><details class="ai-settings" id="aiSettings"><summary>Подключение онлайн-ИИ · настройки</summary><label class="field"><span>API-ключ OpenRouter</span><input id="aiKey" type="password" autocomplete="off" placeholder="Вставь свой API-ключ" /></label><label class="field"><span>Модель</span><input id="aiModel" value="openrouter/free" placeholder="openrouter/free" /></label><small>Ключ хранится только в памяти вкладки и не записывается в файл. Для запросов нужен ключ OpenRouter; доступность бесплатных моделей и лимиты зависят от провайдера. <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">Получить ключ ↗</a></small><div style="padding:0 0 12px"><button class="btn light" onclick="saveAISettings()" type="button">Применить настройки</button></div></details><div class="ai-messages" id="aiMessages" aria-live="polite"><div class="ai-msg bot">Привет! Я Луми 🌿 Могу помочь улучшить идею, придумать план, написать текст или обсудить проект. Чтобы отвечать настоящей онлайн-моделью, подключи API-ключ в настройках выше.</div></div><form class="ai-compose" id="aiChatForm"><textarea id="aiPrompt" rows="1" maxlength="4000" placeholder="Напиши, что хочешь обсудить…" aria-label="Сообщение Луми"></textarea><button class="btn" type="submit" id="aiSend">Отправить ↗</button></form><div class="ai-privacy">Не отправляй пароли и личные данные. Сообщения отправляются выбранному ИИ-провайдеру.</div></div></div>
 
 <script>
-const KEY='gostinaya_redesign_v2';
 const categories=['Все','AI и технологии','Образование','Экология','Здоровье','Бизнес','Культура и город','Другое'];
-const seed=[
-{id:101,a:'Анна',t:'Планировщик питания для студентов',d:'Подбирает рецепты под небольшой бюджет и то, что уже лежит в холодильнике. Хочется сделать питание проще и доступнее.',c:'Здоровье',need:'Честный отзыв',l:12,hp:3,ts:Date.now()-26*3600000,cm:[{a:'Максим',x:'Классная задача! Уже спрашивали у студентов, как они планируют покупки?'}]},
-{id:102,a:'Дмитрий',t:'Биржа репетиторов-студентов',d:'Старшекурсники проводят короткие занятия за небольшую плату. Нужны отзывы и рейтинг, чтобы появилось доверие.',c:'Образование',need:'Ищу команду',l:8,hp:5,ts:Date.now()-8*3600000,cm:[{a:'Софья',x:'Я могу помочь с дизайном и пользовательскими сценариями 🙂'}]},
-{id:103,a:'Лена',t:'Трекер экологичного выбора',d:'Сканируешь чек — видишь экологический след покупок и получаешь простые советы, что можно заменить.',c:'Экология',need:'Технологии',l:15,hp:2,ts:Date.now()-2*3600000,cm:[]}
-];
 let ideas=[],mine={},filter='Все',need='Честный отзыв',currentName='Гость',toastTimer;
 const $=id=>document.getElementById(id);
+
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function avatar(n){const emojis=['🧑🏻‍💻','👩🏽‍🎨','🧑🏼‍🚀','👩🏻‍🔬','🧑🏾‍💼','👨🏻‍🎓'];let x=0;for(let c of n)x+=c.charCodeAt(0);return emojis[x%emojis.length]}
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){ideas=s.ideas||seed;mine=s.mine||{};currentName=s.name||'Гость';}else ideas=[...seed];}catch(e){ideas=[...seed]}if(currentName!=='Гость')$('userName').value=currentName;save()}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({ideas,mine,name:currentName}))}catch(e){}}
+
+// Асинхронная загрузка идей с бэкенда (Neon PostgreSQL)
+async function loadIdeas(){
+  try{
+    const res = await fetch('/api/ideas');
+    if(res.ok){
+      ideas = await res.json();
+      render();
+    }
+  }catch(e){
+    console.error('Ошибка загрузки идей:', e);
+  }
+}
+
+function loadSession(){
+  try{
+    const s = JSON.parse(localStorage.getItem('gostinaya_session')||'null');
+    if(s){ mine = s.mine||{}; currentName = s.name||'Гость'; }
+  }catch(e){}
+  if(currentName!=='Гость') $('userName').value = currentName;
+}
+
+function saveSession(){
+  try{ localStorage.setItem('gostinaya_session', JSON.stringify({mine, name:currentName})) }catch(e){}
+}
+
 function showToast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2400)}
-function ago(ts){let m=Math.max(1,Math.round((Date.now()-ts)/60000));if(m<60)return m+' мин назад';let h=Math.round(m/60);if(h<24)return h+' ч назад';return Math.round(h/24)+' дн. назад'}
+function ago(ts){let m=Math.max(1,Math.round((Date.now()-new Date(ts))/60000));if(m<60)return m+' мин назад';let h=Math.round(m/60);if(h<24)return h+' ч назад';return Math.round(h/24)+' дн. назад'}
+
 function renderFilters(){$('filters').innerHTML=categories.map(c=>`<button class="chip ${filter===c?'active':''}" onclick="setFilter('${c}')">${c}</button>`).join('')}
 function setFilter(c){filter=c;render()}
-function render(){renderFilters();const q=$('searchIdeas').value.trim().toLowerCase();const list=ideas.filter(i=>(filter==='Все'||i.c===filter|| (filter==='AI и технологии'&&i.c==='AI'))&&(!q||(i.t+' '+i.d+' '+i.a+' '+i.c).toLowerCase().includes(q))).sort((a,b)=>b.ts-a.ts);$('feed').innerHTML=list.length?list.map(i=>{const k=mine[i.id]||{};return `<article class="post"><div class="post-top"><div class="avatar">${avatar(i.a)}</div><div><div class="author">${esc(i.a)}</div><div class="muted">${ago(i.ts)}</div></div></div><h4>${esc(i.t)}</h4><div class="post-desc">${esc(i.d)}</div><div class="tags"><span class="tag">${esc(i.c)}</span><span class="tag">🙋 ${esc(i.need)}</span></div><div class="reactions"><button class="reaction ${k.l?'on':''}" onclick="react(${i.id},'l')">♡ Нравится · ${i.l}</button><button class="reaction ${k.hp?'on':''}" onclick="react(${i.id},'hp')">✳ Хочу помочь · ${i.hp}</button><button class="reaction" onclick="callLumi(${i.id})">Луми ↗</button></div><div class="thread">${(i.cm||[]).map(c=>`<div class="comment ${c.ai?'ai':''}"><div class="avatar">${c.ai?'✳':avatar(c.a)}</div><div class="bubble"><b>${esc(c.a)}</b>${esc(c.x)}</div></div>`).join('')}</div><div class="reply"><input id="reply-${i.id}" placeholder="Добавить добрый совет или вопрос…" maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();reply(${i.id})}"><button class="btn" onclick="reply(${i.id})">Ответить</button></div></article>`}).join(''):'<div class="empty">🌱 Ничего не нашлось. Попробуй другой запрос или выбери «Все».</div>'}
+
+function render(){
+  renderFilters();
+  const q=$('searchIdeas').value.trim().toLowerCase();
+  const list=ideas.filter(i=>(filter==='Все'||i.c===filter||(filter==='AI и технологии'&&i.c==='AI'))&&(!q||(i.t+' '+i.d+' '+i.a+' '+i.c).toLowerCase().includes(q))).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  $('feed').innerHTML=list.length?list.map(i=>{const k=mine[i.id]||{};return `<article class="post"><div class="post-top"><div class="avatar">${avatar(i.a)}</div><div><div class="author">${esc(i.a)}</div><div class="muted">${ago(i.ts)}</div></div></div><h4>${esc(i.t)}</h4><div class="post-desc">${esc(i.d)}</div><div class="tags"><span class="tag">${esc(i.c)}</span><span class="tag">🙋 ${esc(i.need)}</span></div><div class="reactions"><button class="reaction ${k.l?'on':''}" onclick="react(${i.id},'l')">♡ Нравится · ${i.l}</button><button class="reaction ${k.hp?'on':''}" onclick="react(${i.id},'hp')">✳ Хочу помочь · ${i.hp}</button><button class="reaction" onclick="callLumi(${i.id})">Луми ↗</button></div><div class="thread">${(i.cm||[]).map(c=>`<div class="comment ${c.ai?'ai':''}"><div class="avatar">${c.ai?'✳':avatar(c.a)}</div><div class="bubble"><b>${esc(c.a)}</b>${esc(c.x)}</div></div>`).join('')}</div><div class="reply"><input id="reply-${i.id}" placeholder="Добавить добрый совет или вопрос…" maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();reply(${i.id})}"><button class="btn" onclick="reply(${i.id})">Ответить</button></div></article>`}).join(''):'<div class="empty">🌱 Ничего не нашлось. Попробуй другой запрос или выбери «Все».</div>'
+}
+
 function setNeed(n){need=n;document.querySelectorAll('[data-need]').forEach(b=>b.classList.toggle('active',b.dataset.need===n))}
 $('needs').addEventListener('click',e=>{const b=e.target.closest('[data-need]');if(b)setNeed(b.dataset.need)});
-$('ideaForm').addEventListener('submit',e=>{e.preventDefault();const t=$('ideaTitle').value.trim(),d=$('ideaDesc').value.trim();if(!t||!d){showToast('Добавь название и описание идеи 🙂');return}ideas.push({id:Date.now(),a:currentName==='Гость'?'Гость':currentName,t,d,c:$('ideaCategory').value,need,l:0,hp:0,ts:Date.now(),cm:[]});save();$('ideaTitle').value='';$('ideaDesc').value='';$('aiOutput').hidden=true;filter='Все';render();showToast('Идея опубликована — спасибо! ✨')});
+
+// Публикация идеи через бэкенд и Neon DB
+$('ideaForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const title=$('ideaTitle').value.trim(), description=$('ideaDesc').value.trim();
+  if(!title||!description){showToast('Добавь название и описание идеи 🙂');return}
+  
+  try{
+    const res = await fetch('/api/ideas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, description, category: $('ideaCategory').value, helpType: need })
+    });
+    if(!res.ok) throw new Error('Не удалось опубликовать идею');
+    
+    $('ideaTitle').value='';$('ideaDesc').value='';$('aiOutput').hidden=true;filter='Все';
+    await loadIdeas();
+    showToast('Идея опубликована — спасибо! ✨');
+  }catch(err){
+    showToast('Ошибка: ' + err.message);
+  }
+});
+
 $('searchIdeas').addEventListener('input',render);
-function react(id,k){const i=ideas.find(x=>x.id===id);if(!i)return;mine[id]=mine[id]||{};if(mine[id][k]){mine[id][k]=false;i[k]--}else{mine[id][k]=true;i[k]++}save();render()}
-function reply(id){const inp=$('reply-'+id),x=inp.value.trim();if(!x)return;const i=ideas.find(x=>x.id===id);if(i){i.cm.push({a:currentName,x});save();render();showToast('Ответ добавлен 💬')}}
+
+function react(id,k){
+  const i=ideas.find(x=>x.id===id);if(!i)return;mine[id]=mine[id]||{};if(mine[id][k]){mine[id][k]=false;i[k]--}else{mine[id][k]=true;i[k]++}
+  saveSession();render();
+}
+
+async function reply(id){
+  const inp=$('reply-'+id), x=inp.value.trim();
+  if(!x)return;
+  const i=ideas.find(x=>x.id===id);
+  if(i){
+    if(!i.cm) i.cm = [];
+    i.cm.push({a:currentName, x});
+    inp.value='';
+    saveSession();
+    render();
+    showToast('Ответ добавлен 💬');
+  }
+}
+
 function getAIKey(){return window.sessionStorage.getItem('gostinaya_ai_key')||''}
 function getAIModel(){return window.sessionStorage.getItem('gostinaya_ai_model')||'openrouter/free'}
 function saveAISettings(){const k=$('aiKey').value.trim(),m=$('aiModel').value.trim()||'openrouter/free';if(k)sessionStorage.setItem('gostinaya_ai_key',k);else sessionStorage.removeItem('gostinaya_ai_key');sessionStorage.setItem('gostinaya_ai_model',m);$('aiSettings').open=false;addAIMessage('system',k?'Настройки применены. Онлайн-ИИ готов к запросам.':'Ключ не указан — чат покажет подсказку, но не сможет вызвать онлайн-модель.');showToast(k?'Онлайн-ИИ подключён к настройкам':'Вставь API-ключ для онлайн-ответов')}
@@ -141,11 +208,36 @@ async function askOnlineAI(prompt,history=[]){const key=getAIKey();if(!key)throw
 let aiHistory=[];
 $('aiChatForm').addEventListener('submit',async e=>{e.preventDefault();const prompt=$('aiPrompt').value.trim();if(!prompt)return;$('aiPrompt').value='';addAIMessage('user',prompt);const pending=addAIMessage('bot','Луми думает…');$('aiSend').disabled=true;try{const answer=await askOnlineAI(prompt,aiHistory.slice(-8));pending.textContent=answer;aiHistory.push({role:'user',content:prompt},{role:'assistant',content:answer});$('aiMessages').scrollTop=$('aiMessages').scrollHeight}catch(err){pending.textContent='Не удалось получить онлайн-ответ. '+err.message; if(!getAIKey())$('aiSettings').open=true}finally{$('aiSend').disabled=false;$('aiPrompt').focus()}});
 async function improveIdea(){const t=$('ideaTitle').value.trim(),d=$('ideaDesc').value.trim();if(!t&&!d){showToast('Сначала набросай пару слов об идее');return}if(getAIKey()){const out=$('aiOutput');out.hidden=false;out.textContent='Луми анализирует идею онлайн…';try{const answer=await askOnlineAI('Помоги улучшить идею участника сообщества. Название: '+(t||'не указано')+'\nОписание: '+(d||'не указано')+'\nСформулируй более ясное описание, целевую аудиторию, ключевую гипотезу и 3 конкретных следующих шага. Ответ на русском.');out.textContent='✨ Ответ онлайн-ИИ Луми:\n\n'+answer;showToast('Онлайн-ИИ помог улучшить идею ✨');return}catch(err){out.textContent='Онлайн-ИИ недоступен: '+err.message+'\n\nПодготовлен базовый черновик.'}}const text=`ПРОБЛЕМА\n${d||'Какую задачу решает идея — стоит уточнить.'}\n\nРЕШЕНИЕ\n${t||'Опиши, как ты предлагаешь решить проблему.'}\n\nДЛЯ КОГО\nКто сталкивается с этой задачей чаще всего?\n\nПЕРВЫЙ ШАГ\nПоговори с тремя потенциальными пользователями и узнай, как они решают эту задачу сейчас.`;$('aiOutput').hidden=false;$('aiOutput').textContent='✨ Черновик от Луми — можно изменить под себя:\n\n'+text;showToast('Подготовлен черновик идеи ✨')}
-function callLumi(id){const i=ideas.find(x=>x.id===id);if(!i)return;i.cm.push({a:'Луми',ai:true,x:`В идее «${i.t}» уже есть хороший старт: ты обозначил направление и запрос на помощь. Что важно проверить в первую очередь? Кто сильнее всего нуждается в таком решении и как сейчас справляется без него? Первый шаг — поговорить с тремя такими людьми и записать повторяющиеся ответы.`});save();render();showToast('Луми подключился к обсуждению ✨')}
+
+// Реальный вызов бэкенда для генерации ответа от Google Gemini API
+async function callLumi(id){
+  const i = ideas.find(x => x.id === id);
+  if(!i) return;
+  
+  showToast('Луми изучает идею… 🧠');
+  
+  try {
+    const res = await fetch('/api/ai/comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ideaId: i.id })
+    });
+    
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Ошибка ИИ');
+    
+    await loadIdeas(); // Перезапрашиваем данные из базы данных
+    showToast('Луми сгенерировал ответ! ✨');
+  } catch (err) {
+    showToast('Ошибка Луми: ' + err.message);
+  }
+}
+
 function setCity(btn){document.querySelectorAll('.city').forEach(x=>x.classList.remove('active'));btn.classList.add('active');$('cityHeading').textContent='Участники: '+btn.dataset.city;showToast('Выбран город: '+btn.dataset.city)}
 function eventInfo(title,meta,desc){$('modalTitle').textContent=title;$('modalMeta').textContent=meta;$('modalDesc').textContent=desc;openModal('infoModal')}
 function openModal(id){$(id).classList.add('open');document.body.style.overflow='hidden'}
 function closeModal(id){$(id).classList.remove('open');if(!document.querySelector('.modal.open'))document.body.style.overflow=''}
+
 async function joinCommunity(){
   const name = $('userName').value.trim();
   const role = $('userRole').value;
@@ -162,22 +254,22 @@ async function joinCommunity(){
     if (!res.ok) throw new Error(data.error || 'Ошибка входа');
     
     currentName = data.user.name;
-    save();
+    saveSession();
     closeModal('joinModal');
     showToast('Добро пожаловать в гостиную, ' + data.user.name + '! 🌿');
-    
-    // Перезагружаем страницу или обновляем состояние интерфейса, чтобы подтянуть сессию
     setTimeout(() => window.location.reload(), 1000);
   } catch (err) {
     showToast('Не удалось войти: ' + err.message);
   }
 }
+
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.open').forEach(m=>closeModal(m.id))});
 $('themeToggle').addEventListener('click',()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';$('themeToggle').textContent=dark?'☀':'☾';try{localStorage.setItem('gostinaya_theme',dark?'dark':'light')}catch(e){}});
 const paletteSelect=$('paletteSelect');function applyPalette(name){document.documentElement.dataset.palette=name;paletteSelect.value=name;try{localStorage.setItem('gostinaya_palette',name)}catch(e){}}paletteSelect.addEventListener('change',()=>applyPalette(paletteSelect.value));
 $('menuToggle').addEventListener('click',()=>$('navlinks').classList.toggle('open'));
 document.querySelectorAll('#navlinks a').forEach(a=>a.addEventListener('click',()=>$('navlinks').classList.remove('open')));
+
 const quizData=[
 {q:'Что сейчас больше всего про тебя?',opts:[['Основатель с идеей','Есть проект, нужны люди и обратная связь'],['AI-практик','Экспериментирую с технологиями и продуктами'],['Специалист в поиске','Хочу применить навыки в интересном деле'],['Ментор или эксперт','Могу помочь опытом и связями']]},
 {q:'Что ты хочешь найти в первую очередь?',opts:[['Команду','Людей, с которыми можно строить продукт'],['Первые пользователей','Проверить гипотезу и получить честный отзыв'],['Наставника','Обсудить сложные решения с опытным человеком'],['Партнёров','Найти экспертизу, контакты или ресурсы']]},
@@ -187,8 +279,15 @@ const quizData=[
 function renderQuiz(){const q=quizData[quizStep];$('quizCount').textContent=`Вопрос ${quizStep+1} из ${quizData.length}`;$('quizProgress').style.width=((quizStep+1)/quizData.length*100)+'%';$('quizQuestion').textContent=q.q;$('quizOptions').innerHTML=q.opts.map((o,i)=>`<button class="quiz-option" onclick="answerQuiz(${i})"><span>${esc(o[0])}<small>${esc(o[1])}</small></span><span class="arrow">→</span></button>`).join('');$('quizHint').textContent='Выбери наиболее близкий вариант';$('quizReset').hidden=true}
 function answerQuiz(i){quizAnswers[quizStep]=i;if(quizStep<quizData.length-1){quizStep++;renderQuiz();return}const role=quizData[0].opts[quizAnswers[0]][0],goal=quizData[1].opts[quizAnswers[1]][0],stage=quizData[2].opts[quizAnswers[2]][0],format=quizData[3].opts[quizAnswers[3]][0];$('quizCount').textContent='Твой маршрут готов';$('quizProgress').style.width='100%';$('quizQuestion').textContent='Тебе стоит начать с этого';$('quizOptions').innerHTML=`<div class="panel" style="padding:18px;background:var(--mint)"><div class="eyebrow">Твой профиль</div><h3 style="margin:10px 0">${esc(role)}</h3><p style="margin:0 0 8px"><b>Цель:</b> ${esc(goal)}</p><p style="margin:0 0 8px"><b>Стадия:</b> ${esc(stage)}</p><p style="margin:0"><b>Формат:</b> ${esc(format)}</p></div><button class="btn" onclick="document.getElementById('ideas').scrollIntoView({behavior:'smooth'})">Расскажи о своей задаче ↗</button>`;$('quizHint').textContent='Это стартовая подсказка — дальше всё зависит от тебя.';$('quizReset').hidden=false}
 function resetQuiz(){quizStep=0;quizAnswers=[];renderQuiz()}
-$('year').textContent=new Date().getFullYear();try{const savedTheme=localStorage.getItem('gostinaya_theme');if(savedTheme){document.documentElement.dataset.theme=savedTheme;$('themeToggle').textContent=savedTheme==='dark'?'☀':'☾'}}catch(e){}try{applyPalette(localStorage.getItem('gostinaya_palette')||'forest')}catch(e){applyPalette('forest')}
-load();render();renderQuiz();
+
+$('year').textContent=new Date().getFullYear();
+try{const savedTheme=localStorage.getItem('gostinaya_theme');if(savedTheme){document.documentElement.dataset.theme=savedTheme;$('themeToggle').textContent=savedTheme==='dark'?'☀':'☾'}}catch(e){}
+try{applyPalette(localStorage.getItem('gostinaya_palette')||'forest')}catch(e){applyPalette('forest')}
+
+// Инициализация при загрузке страницы
+loadSession();
+loadIdeas();
+renderQuiz();
 </script>
 </body>
 </html>
