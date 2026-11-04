@@ -5,7 +5,7 @@ const prisma = require('../db');
 const wrap = require('../middleware/wrap');
 const validate = require('../middleware/validate');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
-const { CATEGORIES, REACTION_TYPES } = require('../constants');
+const { CATEGORIES, NEEDS, REACTION_TYPES } = require('../constants');
 
 const router = express.Router();
 
@@ -57,8 +57,8 @@ const ideaSchema = z.object({
   title: z.string().trim().min(1, 'Добавь название идеи').max(100, 'Название — не длиннее 100 символов'),
   description: z.string().trim().min(1, 'Добавь описание идеи').max(1200, 'Описание — не длиннее 1200 символов'),
   category: z.enum(CATEGORIES, { errorMap: () => ({ message: 'Неизвестное направление' }) }),
-  // Разрешаем любой текст для типа помощи, чтобы избежать ошибок валидации
-  need: z.string().trim().min(1, 'Укажи тип помощи').default('Честный отзыв'),
+  // Контракт с фронтендом: поле называется `need` и берётся из фиксированного списка
+  need: z.enum(NEEDS, { errorMap: () => ({ message: 'Неизвестный тип помощи' }) }),
 });
 
 const commentSchema = z.object({
@@ -85,18 +85,9 @@ router.get('/', optionalAuth, wrap(async (req, res) => {
   res.json({ ideas: ideas.map((i) => toDto(i, req.userId)) });
 }));
 
-// POST /api/ideas — опубликовать идею
+// POST /api/ideas {title, description, category, need} — опубликовать идею
 router.post('/', requireAuth, validate(ideaSchema), wrap(async (req, res) => {
-  // Поддерживаем как req.body.need, так и req.body.helpType на случай разных названий полей с фронта
-  const payload = {
-    title: req.body.title,
-    description: req.body.description,
-    category: req.body.category,
-    need: req.body.need || req.body.helpType || 'Честный отзыв',
-    authorId: req.userId
-  };
-
-  const idea = await prisma.idea.create({ data: payload, include: ideaInclude });
+  const idea = await prisma.idea.create({ data: { ...req.body, authorId: req.userId }, include: ideaInclude });
   res.status(201).json({ idea: toDto(idea, req.userId) });
 }));
 
@@ -122,4 +113,4 @@ router.post('/:id/comments', requireAuth, parseId, validate(commentSchema), wrap
 }));
 
 module.exports = router;
-module.exports.loadIdea = loadIdea; // понадобится ИИ-модулю
+module.exports.loadIdea = loadIdea; // используется ИИ-модулем (ai.js)

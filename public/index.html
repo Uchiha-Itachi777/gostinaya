@@ -49,7 +49,7 @@
  <div class="container nav">
   <a class="brand" href="#home" aria-label="Гостиная идей"><span class="brandmark">✳</span> гостиная идей</a>
   <nav class="navlinks" id="navlinks"><a href="#community">Сообщество⌄</a><a href="#about">О проекте</a><a href="#events">Мероприятия</a><a href="#ideas">Идеи участников</a><a href="#quiz">Найти своих</a></nav>
-  <div class="navactions"><label class="palette-control" title="Цветовая палитра"><span>Цвет</span><select id="paletteSelect" aria-label="Цветовая палитра"><option value="forest">🌿 Лесная</option><option value="ocean">🌊 Голубая</option><option value="sunset">🍊 Оранжевая</option><option value="lilac">💜 Лавандовая</option><option value="rose">🌸 Розовая</option></select></label><button class="iconbtn" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">☾</button><button class="btn" onclick="openModal('joinModal')">Присоединиться ↗</button><button class="iconbtn menu-toggle" id="menuToggle" aria-label="Открыть меню">☰</button></div>
+  <div class="navactions"><label class="palette-control" title="Цветовая палитра"><span>Цвет</span><select id="paletteSelect" aria-label="Цветовая палитра"><option value="forest">🌿 Лесная</option><option value="ocean">🌊 Голубая</option><option value="sunset">🍊 Оранжевая</option><option value="lilac">💜 Лавандовая</option><option value="rose">🌸 Розовая</option></select></label><button class="iconbtn" id="themeToggle" title="Сменить тему" aria-label="Сменить тему">☾</button><button class="btn" id="joinBtn" onclick="onJoinBtn()">Присоединиться ↗</button><button class="iconbtn menu-toggle" id="menuToggle" aria-label="Открыть меню">☰</button></div>
  </div>
 </header>
 <main id="home">
@@ -102,42 +102,63 @@
 <footer class="footer"><div class="container footer-inner"><a class="brand" href="#home"><span class="brandmark">✳</span> гостиная идей</a><span>Придумываем вместе. Растём вместе. © <span id="year"></span></span><a href="#home" class="text-link">Наверх ↑</a></div></footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="modal" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-box"><button class="iconbtn modal-close" onclick="closeModal('infoModal')" aria-label="Закрыть">×</button><div class="eyebrow">Гостиная идей</div><h3 id="modalTitle">Подробнее</h3><p id="modalMeta"></p><p id="modalDesc"></p><button class="btn" onclick="closeModal('infoModal')">Понятно ↗</button></div></div>
-<div class="modal" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="joinTitle"><div class="modal-box"><button class="iconbtn modal-close" onclick="closeModal('joinModal')" aria-label="Закрыть">×</button><div class="eyebrow">Добро пожаловать</div><h3 id="joinTitle">Займи место в гостиной</h3><p>Представься — и можешь сразу публиковать идеи и участвовать в обсуждениях на этом устройстве.</p><label class="field"><span>Как тебя называть?</span><input id="userName" maxlength="24" placeholder="Твоё имя"></label><label class="field"><span>Чем занимаешься?</span><select id="userRole"><option>Придумываю свой проект</option><option>Ищу команду</option><option>Разрабатываю и создаю</option><option>Изучаю новое</option><option>Помогаю другим идеям</option></select></label><button class="btn" onclick="joinCommunity()">Войти в гостиную ↗</button></div></div>
+<div class="modal" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="joinTitle"><div class="modal-box"><button class="iconbtn modal-close" onclick="closeModal('joinModal')" aria-label="Закрыть">×</button><div class="eyebrow">Добро пожаловать</div><h3 id="joinTitle">Займи место в гостиной</h3><p>Войди по email или создай аккаунт — и сможешь публиковать идеи, ставить реакции и участвовать в обсуждениях.</p><label class="field"><span>Email</span><input id="userEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label class="field"><span>Пароль (от 6 символов)</span><input id="userPassword" type="password" autocomplete="current-password" maxlength="72" placeholder="Пароль"></label><label class="field"><span>Как тебя называть? (только при первой регистрации)</span><input id="userName" maxlength="24" placeholder="Твоё имя"></label><label class="field"><span>Чем занимаешься?</span><select id="userRole"><option>Придумываю свой проект</option><option>Ищу команду</option><option>Разрабатываю и создаю</option><option>Изучаю новое</option><option>Помогаю другим идеям</option></select></label><button class="btn" onclick="joinCommunity()">Войти в гостиную ↗</button></div></div>
 
 <button class="ai-launch" onclick="openLumiChat()" aria-label="Открыть онлайн-помощника Луми"><span class="ai-dot"></span> ✨ Спросить Луми</button>
-<div class="modal ai-modal" id="lumiModal" role="dialog" aria-modal="true" aria-labelledby="lumiTitle"><div class="modal-box"><div class="ai-head"><div><h3 id="lumiTitle">✨ Луми — ИИ-напарник</h3><p>Помогает развивать идеи и находить следующий шаг</p></div><button class="iconbtn" onclick="closeModal('lumiModal')" aria-label="Закрыть чат">×</button></div><details class="ai-settings" id="aiSettings"><summary>Подключение онлайн-ИИ · настройки</summary><label class="field"><span>API-ключ OpenRouter</span><input id="aiKey" type="password" autocomplete="off" placeholder="Вставь свой API-ключ" /></label><label class="field"><span>Модель</span><input id="aiModel" value="openrouter/free" placeholder="openrouter/free" /></label><small>Ключ хранится только в памяти вкладки и не записывается в файл. Для запросов нужен ключ OpenRouter; доступность бесплатных моделей и лимиты зависят от провайдера. <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">Получить ключ ↗</a></small><div style="padding:0 0 12px"><button class="btn light" onclick="saveAISettings()" type="button">Применить настройки</button></div></details><div class="ai-messages" id="aiMessages" aria-live="polite"><div class="ai-msg bot">Привет! Я Луми 🌿 Могу помочь улучшить идею, придумать план, написать текст или обсудить проект. Чтобы отвечать настоящей онлайн-моделью, подключи API-ключ в настройках выше.</div></div><form class="ai-compose" id="aiChatForm"><textarea id="aiPrompt" rows="1" maxlength="4000" placeholder="Напиши, что хочешь обсудить…" aria-label="Сообщение Луми"></textarea><button class="btn" type="submit" id="aiSend">Отправить ↗</button></form><div class="ai-privacy">Не отправляй пароли и личные данные. Сообщения отправляются выбранному ИИ-провайдеру.</div></div></div>
+<div class="modal ai-modal" id="lumiModal" role="dialog" aria-modal="true" aria-labelledby="lumiTitle"><div class="modal-box"><div class="ai-head"><div><h3 id="lumiTitle">✨ Луми — ИИ-напарник</h3><p>Помогает развивать идеи и находить следующий шаг</p></div><button class="iconbtn" onclick="closeModal('lumiModal')" aria-label="Закрыть чат">×</button></div><div class="ai-messages" id="aiMessages" aria-live="polite"><div class="ai-msg bot">Привет! Я Луми 🌿 Могу помочь улучшить идею, придумать план, написать текст или обсудить проект. Чтобы поговорить со мной, войди в гостиную.</div></div><form class="ai-compose" id="aiChatForm"><textarea id="aiPrompt" rows="1" maxlength="4000" placeholder="Напиши, что хочешь обсудить…" aria-label="Сообщение Луми"></textarea><button class="btn" type="submit" id="aiSend">Отправить ↗</button></form><div class="ai-privacy">Не отправляй пароли и личные данные. Сообщения обрабатывает ИИ-модель Google Gemini через сервер гостиной.</div></div></div>
 
 <script>
 const categories=['Все','AI и технологии','Образование','Экология','Здоровье','Бизнес','Культура и город','Другое'];
-let ideas=[],mine={},filter='Все',need='Честный отзыв',currentName='Гость',toastTimer;
+let ideas=[],me=null,filter='Все',need='Честный отзыв',toastTimer;
+const lumiBusy=new Set(); // id идей, для которых Луми сейчас отвечает
 const $=id=>document.getElementById(id);
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function avatar(n){const emojis=['🧑🏻‍💻','👩🏽‍🎨','🧑🏼‍🚀','👩🏻‍🔬','🧑🏾‍💼','👨🏻‍🎓'];let x=0;for(let c of n)x+=c.charCodeAt(0);return emojis[x%emojis.length]}
 
-// Асинхронная загрузка идей с бэкенда (Neon PostgreSQL)
+// Обёртка над fetch: возвращает JSON, а при ошибке бросает Error с текстом от сервера
+async function api(url,options={}){
+  const res=await fetch(url,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+  let data={};try{data=await res.json()}catch(e){}
+  if(!res.ok){const err=new Error(data.error||('Ошибка '+res.status));err.status=res.status;throw err}
+  return data;
+}
+// Если сервер сказал «нужен вход» — открываем окно входа
+function handleApiError(err,prefix){
+  if(err.status===401)openModal('joinModal');
+  showToast((prefix||'Ошибка: ')+err.message);
+}
+
+// Лента идей из Neon. Бэкенд отдаёт { ideas: [...] }, но на всякий случай понимаем и голый массив
 async function loadIdeas(){
   try{
-    const res = await fetch('/api/ideas');
-    if(res.ok){
-      ideas = await res.json();
-      render();
-    }
+    const data=await api('/api/ideas');
+    ideas=Array.isArray(data)?data:(Array.isArray(data.ideas)?data.ideas:[]);
+    render();
   }catch(e){
-    console.error('Ошибка загрузки идей:', e);
+    console.error('Ошибка загрузки идей:',e);
+    showToast('Не удалось загрузить идеи');
   }
 }
-
-function loadSession(){
-  try{
-    const s = JSON.parse(localStorage.getItem('gostinaya_session')||'null');
-    if(s){ mine = s.mine||{}; currentName = s.name||'Гость'; }
-  }catch(e){}
-  if(currentName!=='Гость') $('userName').value = currentName;
+// Подменяем одну карточку свежими данными с сервера (идея приходит в том же формате, что и в ленте)
+function replaceIdea(idea){
+  const k=ideas.findIndex(x=>x.id===idea.id);
+  if(k>=0)ideas[k]=idea;else ideas.unshift(idea);
+  render();
 }
 
-function saveSession(){
-  try{ localStorage.setItem('gostinaya_session', JSON.stringify({mine, name:currentName})) }catch(e){}
+// Кто сейчас вошёл (определяется по httpOnly-куке, а не по localStorage)
+function setMe(u){
+  me=u;
+  $('joinBtn').textContent=u?'👤 '+u.name+' · выйти':'Присоединиться ↗';
+}
+async function loadMe(){
+  try{setMe((await api('/api/auth/me')).user)}catch(e){setMe(null)}
+}
+async function onJoinBtn(){
+  if(!me){openModal('joinModal');return}
+  try{await api('/api/auth/logout',{method:'POST'})}catch(e){}
+  setMe(null);await loadIdeas();showToast('Ты вышел из гостиной');
 }
 
 function showToast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2400)}
@@ -148,88 +169,108 @@ function setFilter(c){filter=c;render()}
 
 function render(){
   renderFilters();
+  // render перерисовывает ленту целиком — запоминаем недописанные ответы, чтобы они не пропадали
+  const drafts={};document.querySelectorAll('[id^="reply-"]').forEach(el=>{if(el.value)drafts[el.id]=el.value});
   const q=$('searchIdeas').value.trim().toLowerCase();
-  const list=ideas.filter(i=>(filter==='Все'||i.c===filter||(filter==='AI и технологии'&&i.c==='AI'))&&(!q||(i.t+' '+i.d+' '+i.a+' '+i.c).toLowerCase().includes(q))).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
-  $('feed').innerHTML=list.length?list.map(i=>{const k=mine[i.id]||{};return `<article class="post"><div class="post-top"><div class="avatar">${avatar(i.a)}</div><div><div class="author">${esc(i.a)}</div><div class="muted">${ago(i.ts)}</div></div></div><h4>${esc(i.t)}</h4><div class="post-desc">${esc(i.d)}</div><div class="tags"><span class="tag">${esc(i.c)}</span><span class="tag">🙋 ${esc(i.need)}</span></div><div class="reactions"><button class="reaction ${k.l?'on':''}" onclick="react(${i.id},'l')">♡ Нравится · ${i.l}</button><button class="reaction ${k.hp?'on':''}" onclick="react(${i.id},'hp')">✳ Хочу помочь · ${i.hp}</button><button class="reaction" onclick="callLumi(${i.id})">Луми ↗</button></div><div class="thread">${(i.cm||[]).map(c=>`<div class="comment ${c.ai?'ai':''}"><div class="avatar">${c.ai?'✳':avatar(c.a)}</div><div class="bubble"><b>${esc(c.a)}</b>${esc(c.x)}</div></div>`).join('')}</div><div class="reply"><input id="reply-${i.id}" placeholder="Добавить добрый совет или вопрос…" maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();reply(${i.id})}"><button class="btn" onclick="reply(${i.id})">Ответить</button></div></article>`}).join(''):'<div class="empty">🌱 Ничего не нашлось. Попробуй другой запрос или выбери «Все».</div>'
+  const list=ideas.filter(i=>(filter==='Все'||i.category===filter)&&(!q||(i.title+' '+i.description+' '+i.author+' '+i.category).toLowerCase().includes(q))).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  $('feed').innerHTML=list.length?list.map(i=>{
+    const my=i.myReactions||{};
+    const comments=i.comments||[];
+    const hasLumi=comments.some(c=>c.isAi);
+    const busy=lumiBusy.has(i.id);
+    const lumiBtn=hasLumi?'':`<button class="reaction" ${busy?'disabled':''} onclick="callLumi(${i.id})">${busy?'Луми думает…':'Луми ↗'}</button>`;
+    return `<article class="post"><div class="post-top"><div class="avatar">${avatar(i.author)}</div><div><div class="author">${esc(i.author)}</div><div class="muted">${ago(i.createdAt)}</div></div></div><h4>${esc(i.title)}</h4><div class="post-desc">${esc(i.description)}</div><div class="tags"><span class="tag">${esc(i.category)}</span><span class="tag">🙋 ${esc(i.need)}</span></div><div class="reactions"><button class="reaction ${my.like?'on':''}" onclick="react(${i.id},'like')">♡ Нравится · ${i.likes}</button><button class="reaction ${my.help?'on':''}" onclick="react(${i.id},'help')">✳ Хочу помочь · ${i.helps}</button>${lumiBtn}</div><div class="thread">${comments.map(c=>`<div class="comment ${c.isAi?'ai':''}"><div class="avatar">${c.isAi?'✳':avatar(c.author)}</div><div class="bubble"><b>${esc(c.author)}</b>${esc(c.text)}</div></div>`).join('')}</div><div class="reply"><input id="reply-${i.id}" placeholder="Добавить добрый совет или вопрос…" maxlength="500" onkeydown="if(event.key==='Enter'){event.preventDefault();reply(${i.id})}"><button class="btn" onclick="reply(${i.id})">Ответить</button></div></article>`
+  }).join(''):'<div class="empty">🌱 Ничего не нашлось. Попробуй другой запрос или выбери «Все».</div>';
+  for(const id in drafts){const el=$(id);if(el)el.value=drafts[id]}
 }
 
 function setNeed(n){need=n;document.querySelectorAll('[data-need]').forEach(b=>b.classList.toggle('active',b.dataset.need===n))}
 $('needs').addEventListener('click',e=>{const b=e.target.closest('[data-need]');if(b)setNeed(b.dataset.need)});
 
-// Публикация идеи через бэкенд и Neon DB
+// Публикация идеи: поля строго по контракту бэкенда — title, description, category, need
 $('ideaForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const title=$('ideaTitle').value.trim(), description=$('ideaDesc').value.trim();
+  const title=$('ideaTitle').value.trim(),description=$('ideaDesc').value.trim();
   if(!title||!description){showToast('Добавь название и описание идеи 🙂');return}
-  
   try{
-    const res = await fetch('/api/ideas', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, description, category: $('ideaCategory').value, helpType: need })
-    });
-    if(!res.ok) throw new Error('Не удалось опубликовать идею');
-    
+    const data=await api('/api/ideas',{method:'POST',body:JSON.stringify({title,description,category:$('ideaCategory').value,need})});
     $('ideaTitle').value='';$('ideaDesc').value='';$('aiOutput').hidden=true;filter='Все';
-    await loadIdeas();
+    replaceIdea(data.idea);
     showToast('Идея опубликована — спасибо! ✨');
-  }catch(err){
-    showToast('Ошибка: ' + err.message);
-  }
+  }catch(err){handleApiError(err)}
 });
 
 $('searchIdeas').addEventListener('input',render);
 
-function react(id,k){
-  const i=ideas.find(x=>x.id===id);if(!i)return;mine[id]=mine[id]||{};if(mine[id][k]){mine[id][k]=false;i[k]--}else{mine[id][k]=true;i[k]++}
-  saveSession();render();
+// Реакции и комментарии пишутся в БД; в ответ приходит обновлённая идея
+async function react(id,type){
+  try{replaceIdea((await api('/api/ideas/'+id+'/react',{method:'POST',body:JSON.stringify({type})})).idea)}
+  catch(err){handleApiError(err)}
 }
 
 async function reply(id){
-  const inp=$('reply-'+id), x=inp.value.trim();
-  if(!x)return;
-  const i=ideas.find(x=>x.id===id);
-  if(i){
-    if(!i.cm) i.cm = [];
-    i.cm.push({a:currentName, x});
-    inp.value='';
-    saveSession();
-    render();
-    showToast('Ответ добавлен 💬');
-  }
+  const inp=$('reply-'+id),text=inp.value.trim();
+  if(!text)return;
+  try{
+    const data=await api('/api/ideas/'+id+'/comments',{method:'POST',body:JSON.stringify({text})});
+    inp.value='';replaceIdea(data.idea);showToast('Ответ добавлен 💬');
+  }catch(err){handleApiError(err)}
 }
 
-function getAIKey(){return window.sessionStorage.getItem('gostinaya_ai_key')||''}
-function getAIModel(){return window.sessionStorage.getItem('gostinaya_ai_model')||'openrouter/free'}
-function saveAISettings(){const k=$('aiKey').value.trim(),m=$('aiModel').value.trim()||'openrouter/free';if(k)sessionStorage.setItem('gostinaya_ai_key',k);else sessionStorage.removeItem('gostinaya_ai_key');sessionStorage.setItem('gostinaya_ai_model',m);$('aiSettings').open=false;addAIMessage('system',k?'Настройки применены. Онлайн-ИИ готов к запросам.':'Ключ не указан — чат покажет подсказку, но не сможет вызвать онлайн-модель.');showToast(k?'Онлайн-ИИ подключён к настройкам':'Вставь API-ключ для онлайн-ответов')}
-function openLumiChat(){if(getAIKey())$('aiKey').value=getAIKey();$('aiModel').value=getAIModel();openModal('lumiModal');setTimeout(()=>$('aiPrompt').focus(),80)}
+// Чат с Луми и «Помочь сформулировать» идут через /api/ai/chat: ключ Gemini хранится только на сервере
+function openLumiChat(){openModal('lumiModal');setTimeout(()=>$('aiPrompt').focus(),80)}
 function addAIMessage(role,content){const el=document.createElement('div');el.className='ai-msg '+role;el.textContent=content;$('aiMessages').appendChild(el);$('aiMessages').scrollTop=$('aiMessages').scrollHeight;return el}
-async function askOnlineAI(prompt,history=[]){const key=getAIKey();if(!key)throw new Error('Сначала открой «Подключение онлайн-ИИ» и добавь API-ключ OpenRouter.');const response=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json','X-OpenRouter-Title':'Гостиная идей'},body:JSON.stringify({model:getAIModel(),messages:[{role:'system',content:'Ты Луми — дружелюбный ИИ-напарник сообщества «Гостиная идей». Отвечай на русском, конкретно и доброжелательно. Помогай превращать задумки в проверяемые шаги. Если не знаешь факт, не выдумывай.'},...history,{role:'user',content:prompt}],temperature:0.7,max_tokens:900})});let data={};try{data=await response.json()}catch(e){}if(!response.ok)throw new Error(data?.error?.message||('Ошибка API: '+response.status));const answer=data?.choices?.[0]?.message?.content;if(!answer)throw new Error('Модель вернула пустой ответ. Попробуй выбрать другую модель.');return answer}
+async function askLumi(message,history=[]){
+  return (await api('/api/ai/chat',{method:'POST',body:JSON.stringify({message,history})})).answer;
+}
 let aiHistory=[];
-$('aiChatForm').addEventListener('submit',async e=>{e.preventDefault();const prompt=$('aiPrompt').value.trim();if(!prompt)return;$('aiPrompt').value='';addAIMessage('user',prompt);const pending=addAIMessage('bot','Луми думает…');$('aiSend').disabled=true;try{const answer=await askOnlineAI(prompt,aiHistory.slice(-8));pending.textContent=answer;aiHistory.push({role:'user',content:prompt},{role:'assistant',content:answer});$('aiMessages').scrollTop=$('aiMessages').scrollHeight}catch(err){pending.textContent='Не удалось получить онлайн-ответ. '+err.message; if(!getAIKey())$('aiSettings').open=true}finally{$('aiSend').disabled=false;$('aiPrompt').focus()}});
-async function improveIdea(){const t=$('ideaTitle').value.trim(),d=$('ideaDesc').value.trim();if(!t&&!d){showToast('Сначала набросай пару слов об идее');return}if(getAIKey()){const out=$('aiOutput');out.hidden=false;out.textContent='Луми анализирует идею онлайн…';try{const answer=await askOnlineAI('Помоги улучшить идею участника сообщества. Название: '+(t||'не указано')+'\nОписание: '+(d||'не указано')+'\nСформулируй более ясное описание, целевую аудиторию, ключевую гипотезу и 3 конкретных следующих шага. Ответ на русском.');out.textContent='✨ Ответ онлайн-ИИ Луми:\n\n'+answer;showToast('Онлайн-ИИ помог улучшить идею ✨');return}catch(err){out.textContent='Онлайн-ИИ недоступен: '+err.message+'\n\nПодготовлен базовый черновик.'}}const text=`ПРОБЛЕМА\n${d||'Какую задачу решает идея — стоит уточнить.'}\n\nРЕШЕНИЕ\n${t||'Опиши, как ты предлагаешь решить проблему.'}\n\nДЛЯ КОГО\nКто сталкивается с этой задачей чаще всего?\n\nПЕРВЫЙ ШАГ\nПоговори с тремя потенциальными пользователями и узнай, как они решают эту задачу сейчас.`;$('aiOutput').hidden=false;$('aiOutput').textContent='✨ Черновик от Луми — можно изменить под себя:\n\n'+text;showToast('Подготовлен черновик идеи ✨')}
+$('aiChatForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const prompt=$('aiPrompt').value.trim();if(!prompt)return;
+  if(!me){closeModal('lumiModal');openModal('joinModal');showToast('Войди, чтобы поговорить с Луми');return}
+  $('aiPrompt').value='';addAIMessage('user',prompt);
+  const pending=addAIMessage('bot','Луми думает…');$('aiSend').disabled=true;
+  try{
+    const answer=await askLumi(prompt,aiHistory.slice(-8));
+    pending.textContent=answer;
+    aiHistory.push({role:'user',content:prompt},{role:'assistant',content:answer});
+    $('aiMessages').scrollTop=$('aiMessages').scrollHeight;
+  }catch(err){
+    pending.textContent='Не удалось получить ответ. '+err.message;
+    if(err.status===401){closeModal('lumiModal');openModal('joinModal')}
+  }finally{$('aiSend').disabled=false;$('aiPrompt').focus()}
+});
+async function improveIdea(){
+  const t=$('ideaTitle').value.trim(),d=$('ideaDesc').value.trim();
+  if(!t&&!d){showToast('Сначала набросай пару слов об идее');return}
+  const out=$('aiOutput');
+  if(me){
+    out.hidden=false;out.textContent='Луми анализирует идею…';
+    try{
+      const answer=await askLumi('Помоги улучшить идею участника сообщества. Название: '+(t||'не указано')+'\nОписание: '+(d||'не указано')+'\nСформулируй более ясное описание, целевую аудиторию, ключевую гипотезу и 3 конкретных следующих шага.');
+      out.textContent='✨ Ответ Луми:\n\n'+answer;showToast('Луми помог улучшить идею ✨');return;
+    }catch(err){out.textContent='Луми сейчас недоступен: '+err.message+'\n\nПодготовлен базовый черновик.'}
+  }
+  const text=`ПРОБЛЕМА\n${d||'Какую задачу решает идея — стоит уточнить.'}\n\nРЕШЕНИЕ\n${t||'Опиши, как ты предлагаешь решить проблему.'}\n\nДЛЯ КОГО\nКто сталкивается с этой задачей чаще всего?\n\nПЕРВЫЙ ШАГ\nПоговори с тремя потенциальными пользователями и узнай, как они решают эту задачу сейчас.`;
+  out.hidden=false;out.textContent=(me?out.textContent+'\n\n':'')+'✨ Черновик от Луми — можно изменить под себя:\n\n'+text;
+  showToast(me?'Подготовлен черновик идеи ✨':'Войди, чтобы Луми помог онлайн; пока — черновик');
+}
 
-// Реальный вызов бэкенда для генерации ответа от Google Gemini API
+// Луми с карточки идеи: POST /api/ai/comment -> Gemini -> комментарий (isAi=true) сохраняется в Neon,
+// сервер возвращает обновлённую идею, и тред перерисовывается
 async function callLumi(id){
-  const i = ideas.find(x => x.id === id);
-  if(!i) return;
-  
+  if(lumiBusy.has(id))return;
+  lumiBusy.add(id);render();
   showToast('Луми изучает идею… 🧠');
-  
-  try {
-    const res = await fetch('/api/ai/comment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ideaId: i.id })
-    });
-    
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Ошибка ИИ');
-    
-    await loadIdeas(); // Перезапрашиваем данные из базы данных
-    showToast('Луми сгенерировал ответ! ✨');
-  } catch (err) {
-    showToast('Ошибка Луми: ' + err.message);
+  try{
+    const data=await api('/api/ai/comment',{method:'POST',body:JSON.stringify({ideaId:id})});
+    lumiBusy.delete(id);replaceIdea(data.idea);
+    showToast('Луми ответил! ✨');
+  }catch(err){
+    lumiBusy.delete(id);
+    if(err.status===409)await loadIdeas(); // Луми уже отвечал — подтягиваем его комментарий
+    else render();
+    handleApiError(err,'Ошибка Луми: ');
   }
 }
 
@@ -238,29 +279,29 @@ function eventInfo(title,meta,desc){$('modalTitle').textContent=title;$('modalMe
 function openModal(id){$(id).classList.add('open');document.body.style.overflow='hidden'}
 function closeModal(id){$(id).classList.remove('open');if(!document.querySelector('.modal.open'))document.body.style.overflow=''}
 
+// Вход по email; если аккаунта нет — создаём (для этого нужно имя)
 async function joinCommunity(){
-  const name = $('userName').value.trim();
-  const role = $('userRole').value;
-  if(!name){showToast('Напиши, как к тебе обращаться');$('userName').focus();return}
-  
-  try {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, role })
-    });
-    
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Ошибка входа');
-    
-    currentName = data.user.name;
-    saveSession();
+  const email=$('userEmail').value.trim(),password=$('userPassword').value,name=$('userName').value.trim(),role=$('userRole').value;
+  if(!email||!password){showToast('Введи email и пароль');return}
+  try{
+    let data;
+    try{
+      data=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})});
+    }catch(e){
+      if(e.status!==401)throw e;
+      if(!name){showToast('Не нашли такой аккаунт или пароль неверный. Чтобы создать новый, напиши имя');$('userName').focus();return}
+      try{
+        data=await api('/api/auth/register',{method:'POST',body:JSON.stringify({email,password,name,role})});
+      }catch(e2){
+        if(e2.status===409)throw new Error('Пароль для этого email неверный');
+        throw e2;
+      }
+    }
+    setMe(data.user);$('userPassword').value='';
     closeModal('joinModal');
-    showToast('Добро пожаловать в гостиную, ' + data.user.name + '! 🌿');
-    setTimeout(() => window.location.reload(), 1000);
-  } catch (err) {
-    showToast('Не удалось войти: ' + err.message);
-  }
+    await loadIdeas(); // чтобы подсветились мои реакции
+    showToast('Добро пожаловать в гостиную, '+data.user.name+'! 🌿');
+  }catch(err){showToast('Не удалось войти: '+err.message)}
 }
 
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
@@ -285,8 +326,7 @@ try{const savedTheme=localStorage.getItem('gostinaya_theme');if(savedTheme){docu
 try{applyPalette(localStorage.getItem('gostinaya_palette')||'forest')}catch(e){applyPalette('forest')}
 
 // Инициализация при загрузке страницы
-loadSession();
-loadIdeas();
+loadMe().then(loadIdeas);
 renderQuiz();
 </script>
 </body>
